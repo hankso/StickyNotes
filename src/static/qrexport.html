@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Export QRCode | StickyNotes: your cloud notes manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-qrcode.min.js"></script>
+    <link rel="stylesheet" href="/css/fontawesome-5.9.0.min.css">
+    <style>
+        #container {
+            width: 80%;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(128px, auto));
+            grid-auto-rows: minmax(128px);
+            grid-gap: 20px;
+        }
+        #container div {
+        }
+        #container div h5 {
+            width: 128px;
+            margin: 15px 0 5px 0;
+        }
+        #container div img {
+            width: 128px;
+            height: 128px;
+        }
+        #ctrl-bar {
+            border: 2px solid black;
+        }
+        h3 { text-align: center; margin-top: 50px; }
+        a { display: block; text-align: center; margin-bottom: 50px; }
+    </style>
+</head>
+<body>
+    <div id=ctrl-bar>
+        <h4>TODO: Adjust QRCode Parameters</h4>
+        <select id="eclevel">
+            <option>L</option>
+            <option>M</option>
+            <option>Q</option>
+            <option>H</option>
+        </select>
+        <input type="number" min="0" max="1" step="0.1" id="radius"></input>
+        <input type="color" placeholder="e.g. #ff00ff" id="color"></input>
+        <input type="number" min="0" max="1" step="0.1" id="msize"></input>
+        <input type="text" placeholder="fontname"></input>
+    </div>
+    <h3>Export all QRCodes as PDF/Images</h3>
+    <a href="/dashboard">Back to Dashboard</a>
+    <div id="container">
+    </div>
+    <script>
+        function renderNote(note) {
+            return $('<div>').append(
+                $('<h5>').text(note.title)
+            ).qrcode({
+                render: 'image', size: 1090, radius: 0.5,
+                ecLevel: 'Q', mode: 2, label: note.title.slice(0, 2),
+                fontcolor: '#f33', mSize: 0.1, mPosX: 0.5, mPosY: 0.5,
+                text: location.origin + '/' + note.url
+            });
+        }
+    </script>
+    <script>
+        $(function() {
+            $.getJSON('/list', (ret) => ret.notes.forEach((note, idx) => {
+                $('div#container').append(
+                    renderNote(note)
+                );
+            }));
+        });
+    </script>
+</body>
+</html>

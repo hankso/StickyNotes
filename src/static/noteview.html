@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>View Note | StickyNotes: your cloud notes manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        body {
+            width: 80%;
+            padding: 40px;
+            position: relative;
+        }
+        h3 {
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+        article {
+            margin: 3rem;
+            white-space: pre-wrap;
+        }
+        footer {
+            font-size: 0.75em;
+            display: flex;
+            flex-flow: row nowrap;
+            justify-content: space-between;
+        }
+        span {
+        }
+    </style>
+</head>
+<body>
+    <h3>{{title}}</h3>
+    <article>{{text}}</article>
+    <footer>
+        <span>Note ID: {{slug}}</span>
+        <span>Last Modified: {{ts}}</span>
+    </footer>
+</body>
+</html>

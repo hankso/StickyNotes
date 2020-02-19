@@ -1,0 +1,306 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Dashboard | StickyNotes: your cloud notes manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-qrcode.min.js"></script>
+    <link rel="stylesheet" href="/css/fontawesome-5.9.0.min.css">
+    <style>
+        html {
+            font-family: Ubuntu, Tahoma, cursive, sans-serif;
+        }
+        .fas {
+            text-align: center;
+            line-height: inherit;
+        }
+        a.fas {
+            cursor: pointer;
+            text-decoration: none;
+        }
+        #note-list {
+            position: relative;
+            display: grid;
+            margin: 3%;
+            padding: 2%;
+            grid-template-columns: repeat(auto-fill, minmax(12rem, auto));
+            grid-auto-rows: minmax(14rem, auto);
+            grid-gap: 10px;
+        }
+        .note-detail {
+            margin: 0 .5rem;
+            padding: 1rem;
+            border: 1px solid #d3d3d3;
+            border-radius: 1rem;
+        }
+        .note-detail a:hover { color: black; }
+        .note-detail .panel-title {
+            width: 100%;
+            height: 2rem;
+            line-height: 2rem;
+            font-size: 1.125em;
+            position: relative;
+        }
+        .note-detail .panel-title a:first-child {
+            display: inline-block;
+            width: calc(100% - 2rem);
+            height: 100%;
+            box-sizing: border-box;
+            padding-left: .2rem;
+            font-weight: bold;
+            color: #575757;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+        .note-detail .panel-title .qricon {
+            width: 2rem;
+            color: grey;
+            float: right;
+        }
+        .note-detail .panel-title .qrcode {
+            width: 6rem;
+            height: 6rem;
+            padding: 1rem;
+            position: absolute;
+            right: 0;
+            top: 2rem;
+            border: 1px solid #d3d3d3;
+            border-radius: 1em 0 1em 1em;
+            background-color: white;
+            z-index: 2;
+            display: none;
+        }
+        .note-detail .panel-title .qrcode img {
+            width: 100%;
+            height: 100%;
+        }
+        .note-detail .panel-title .qricon:hover + .qrcode { display: block; }
+        .note-detail .panel-title .qrcode:hover { display: block; }
+        .note-detail .panel-text {
+            margin-top: .5rem;
+            border-top: 1px solid black;
+            padding-top: .5rem;
+            width: 100%;
+            height: 8rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            text-overflow: ellipsis;
+        }
+        .note-detail .panel-control {
+            position: relative;
+            height: 1rem;
+            z-index: 1;
+        }
+        .note-detail .panel-control .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 1rem;
+            overflow: hidden;
+            background-color: white;
+            border: 1px solid #d3d3d3;
+            border-radius: .5rem;
+            box-sizing: border-box;
+            font-size: 1.25em;
+            line-height: 3rem;
+            transition: height 0.3s;
+        }
+        .note-detail .panel-control .container a { color: grey; }
+        .note-detail .panel-control .container a:first-child {
+            flex: 100%;
+            line-height: 1rem;
+            font-size: 1rem;
+        }
+        .note-detail .panel-control .container:hover { height: 4rem; }
+        .note-detail .panel-control .container:hover a:first-child {
+            transform: rotate(180deg);
+        }
+        .note-detail.note-add {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        #note-action {
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            right: 3%;
+            bottom: 5%;
+            width: 40px;
+            height: 40px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        #note-action a {
+            display: block;
+            font-size: 20px;
+            line-height: 38px;
+            height: 38px;
+            width: 38px;
+            border: 1px solid rgba(50, 205, 50, 1);
+            background-color: rgba(50, 205, 50, .7);
+            border-radius: 50%;
+            color: white;
+        }
+        #note-action:hover { height: 130px; }
+        #note-action:hover *.fas:first-child { display: none; }
+        #note-edit {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(128, 128, 128, .1);
+            z-index: 999;
+        }
+        #note-edit .panel-edit {
+            width: 60%;
+            height: 50%;
+            background-color: #e3e3e3;
+            border: 2px solid #a0a0a0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            overflow: auto;
+        }
+        #note-edit .panel-edit label {
+            display: block;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            margin-bottom: .8rem;
+        }
+        #note-edit .panel-edit input,
+        #note-edit .panel-edit textarea { width: 100%; }
+        #note-edit .panel-edit textarea {
+            resize: vertical;
+            min-height: calc(100% - 15rem);
+            overflow: auto;
+        }
+        #note-edit .panel-edit div {
+            width: 80%;
+            margin: 1rem auto;
+            display: flex;
+            justify-content: space-evenly;
+        }
+    </style>
+</head>
+<body>
+    <div id="note-list">
+        % for note in notes:
+        <div class="note-detail" data-slug="{{note['slug']}}">
+            <div class="panel-title">
+                <a href="{{note['url']}}">{{note['title']}}</a>
+                <a class="fas fa-qrcode qricon"></a>
+                <div class="qrcode" data-url="{{note['url']}}"></div>
+            </div>
+            <div class="panel-text">{{note['text']}}</div>
+            <div class="panel-control">
+                <div class="container">
+                    <a class="fas fa-caret-up"></a>
+                    <a class="fas fa-eye" href="{{note['url']}}"></a>
+                    <a class="fas fa-edit" id="note-update"></a>
+                    <a class="fas fa-trash" id="note-delete"></a>
+                </div>
+            </div>
+        </div>
+        % end
+        <div class="note-detail note-add">
+            <a class="fas fa-plus"></a>
+        </div>
+    </div>
+    <div id="note-action">
+        <a class="fas fa-bars"></a>
+        <a class="fas fa-print" href="qrexport.html" title="Print all"</a>
+        <a class="fas fa-trash" id="note-clear" title="Delete all"></a>
+        <a class="fas fa-plus note-add" title="Add note"></a>
+    </div>
+    <div id="note-edit" style="display:none">
+        <div class="panel-edit">
+            <h4>Create a New Note</h4>
+            <label>Title:</label>
+            <input id="edit-title" type="text" placeholder="e.g. Don't use air conditioner! It's broken."></input>
+            <label>Content:</label>
+            <textarea id="edit-text" placeholder="Input your note here..."></textarea>
+            <div>
+                <button id="save">Save</button>
+                <button id="cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(function() {
+            function showEditPanel(slug) {
+                console.log(`Using slug: ${slug}`);
+                $('#note-edit').data('slug', slug).show();
+                $('#note-list').css('filter', 'blur(2px)');
+            }
+            
+            function hideEditPanel() {
+                $('#note-edit')
+                    .data('slug', undefined)
+                    .hide()
+                    .find('*[placeholder]')
+                        .val('');
+                $('#note-list').css('filter', 'unset');
+            }
+
+            $('.note-add').on('click', () => $.get('generate', showEditPanel));
+
+            $('.panel-control').on('click', 'a#note-update', function() {
+                let detail = $(this).parents('.note-detail');
+                let slug = detail.data('slug');
+                if (!slug) console.error(`Invalid slug: ${detail} ${slug}`);
+                else {
+                    $('#edit-title').val(
+                        detail.find('.panel-title a:first-child').text()
+                    );
+                    $('#edit-text').val(
+                        detail.find('.panel-text').text()
+                    );
+                    showEditPanel(slug);
+                }
+            }).on('click', 'a#note-delete', function() {
+                let slug = $(this).parents('.note-detail').data('slug');
+                $.get('delete/' + slug, () => location.reload());
+            });
+
+            $('.panel-edit').on('click', 'button#save', function() {
+                $.post('edit/' + $('#note-edit').data('slug'), {
+                    title: $('#edit-title').val(),
+                    text: $('#edit-text').val()
+                }, (ret) => {
+                    hideEditPanel();
+                    location.reload();
+                });
+            }).on('click', 'button#cancel', hideEditPanel);
+
+            $('#note-action').on('click', '#note-clear', function() {
+                $.get('clear', ()=>location.reload());
+            });
+            
+            $('.qricon').on('mouseover', function() {
+                let qrbox = $(this).next('.qrcode');
+                if (!qrbox.children().length) {
+                    qrbox.qrcode({
+                        render: 'image', size: 1080, radius: 0.5,
+                        ecLevel: 'Q', mode: 2, label: 'icon',
+                        fontcolor: '#f33',
+                        mSize: 0.1, mPosX: 0.5, mPosY: 0.5,
+                        text: location.origin + "/" + qrbox.data('url'),
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
