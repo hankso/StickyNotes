@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Dashboard | StickyNotes: your cloud notes manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-qrcode.min.js"></script>
+    <script type="text/javascript" src="/js/api.js"></script>
+    <link rel="stylesheet" href="/css/fontawesome-5.9.0.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <script type="text/template" id="template-notedetail">
+        <div class="note-detail" data-slug="${slug}">
+            <div class="panel-title">
+                <a class="custom-sb" href="${url}">${title}</a>
+                <a class="fas fa-qrcode qricon"></a>
+                <div class="qrcode"></div>
+            </div>
+            <div class="panel-text custom-sb">${content}</div>
+            <div class="panel-control">
+                <div class="container">
+                    <a class="fas fa-caret-up"></a>
+                    <a class="fas fa-eye" href="${url}"></a>
+                    <a class="fas fa-edit" id="note-update"></a>
+                    <a class="fas fa-trash" id="note-delete"></a>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <div id="note-list">
+        <div class="note-detail note-add">
+            <a class="fas fa-plus"></a>
+        </div>
+    </div>
+    
+    <div id="note-action">
+        <a class="fas fa-bars"></a>
+        <a class="fas fa-print" href="qrexport.html" title="Print all"</a>
+        <a class="fas fa-trash" id="note-clear" title="Delete all"></a>
+        <a class="fas fa-plus note-add" title="Add note"></a>
+    </div>
+    
+    <div id="note-edit" style="display:none">
+        <div class="panel-edit custom-sb">
+            <h4>Create a New Note</h4>
+            <label>Title:</label>
+            <input id="edit-title" type="text" placeholder="e.g. Don't use air conditioner! It's broken.">
+            <label>Content:</label>
+            <textarea id="edit-text" class="custom-sb" placeholder="Input your note here..."></textarea>
+            <div>
+                <button id="save">Save</button>
+                <button id="cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showEditPanel(slug) {
+            console.log(`Using slug: ${slug}`);
+            $('#note-edit').data('slug', slug).show();
+            $('#note-list').css('filter', 'blur(2px)');
+        }
+        
+        function hideEditPanel() {
+            $('#note-edit')
+                .data('slug', undefined)
+                .hide()
+                .find('*[placeholder]')
+                    .val('');
+            $('#note-list').css('filter', 'unset');
+        }
+
+        function renderNoteTemplate({ title, content, slug }) {
+            let url = `${location.origin}/noteview.html?slug=${slug}`;
+            return eval('`' + $('#template-notedetail').html() + '`');
+        }
+    </script>
+    <script type="text/javascript" src="/js/dashboard.js"></script>
+</body>
+</html>

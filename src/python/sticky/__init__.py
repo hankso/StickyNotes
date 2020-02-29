@@ -1,165 +1,99 @@
 #!/usr/bin/env python
 # coding=utf-8
 #
-# File: StickyNotes/src-python/sticky/__init__.py
+# File: StickyNotes/src/python/sticky/__init__.py
 # Author: Hankso
 # Webpage: https://github.com/hankso
-# Time: Sun 09 Feb 2020 06:32:07 PM CST
+# Time: Thu 20 Feb 2020 03:20:18 PM CST
 
 '''
-1. generate random length of slug for indexing
-2. edit page template
-3. notes static host
-4. management page
+
+Configuration
+-------------
+This program automatically loads configuration files from::
+
+    asdf
+
+Note
+----
+Template is not used to render webpage, because Python is not the
+only distribution in this project. C based server or GitHub Pages
+(which provides pure static file hosting) may be used in backend.
 '''
 
-import os
+# built-ins
 import sys
-import json
-import time
-import random
-import shutil
-import string
-import pathlib
+import argparse
 
 # requirements.txt: network: bottle
+# requirements.txt: optional: bottle_sqlite
 import bottle
-sticky = bottle.Bottle()
 
-# Configurations
-__basedir__ = os.path.dirname(os.path.abspath(__file__))
-__statics__ = os.path.join(__basedir__, '../../static')
-__filedir__ = pathlib.Path(__basedir__).joinpath('../../../data')
-__usechar__ = string.hexdigits
-__maxtry__  = 128                                                  # noqa: E221
+from .configs import CONFIG
 
-json_dumps = json.JSONEncoder(sort_keys=True, separators=(',', ':')).encode
-json_loads = json.JSONDecoder().decode
-
-
-def slug_checkpath(slug):
-    # server file protection: cannot access private static files
-    slug = pathlib.Path(slug).absolute().name
-    return slug, __filedir__.joinpath(slug)
+try:                                 # Check if we have bottle_sqlite installed
+    assert CONFIG.backend == 'db'
+    import bottle.ext.sqlite
+except Exception:                    # No. Use disk files backend
+    from .fs_api import API
+    print('Using FS backend')
+else:                                # Yes. Then use database backend
+    from .db_api import API
+    print('Using DB backend')
 
 
-def slug_notename(slug):
-    return __filedir__.joinpath(slug, 'index.txt')
+def make_app():
+    global application  # provide WSGI Application for Servers like Apache
+    app = application = bottle.Bottle()
+
+    API['app_init'](app)
+
+    @app.route('/')
+    def app_redirect():
+        bottle.redirect('index.html')
+
+    app.route('/note/<slug>', 'GET',        API['note_view'])      # noqa: F405
+    app.route('/note/<slug>', 'POST',       API['note_edit'])      # noqa: F405
+    app.route('/note/<slug>', 'DELETE',     API['note_delete'])    # noqa: F405
+
+    app.route('/new',   ['GET', 'PUT'],     API['app_new'])        # noqa: F405
+    app.route('/list',   'GET',             API['app_list'])       # noqa: F405
+    app.route('/clear', ['GET', 'DELETE'],  API['app_clear'])      # noqa: F405
+
+    @app.route('/<filename:path>')
+    def app_static_files(filename):
+        return bottle.static_file(filename, CONFIG.statics)
+
+    return app
 
 
-def slug_fixpath(slug):
-    # TODO: fix file directory
-    shutil.rmtree(str(__filedir__.joinpath(slug)))
-    raise bottle.HTTPError(500, 'Broken files structure. Note deleted.')
-
-
-@sticky.post('/edit/<slug>')
-def note_edit(slug):
-    # TODO: check editing permission
-    slug, path = slug_checkpath(slug)
-    filename = slug_notename(slug)
-    info = {
-        'title': bottle.request.POST.get('title', ''),
-        'text':  bottle.request.POST.get('text', ''),
-        'ctime': bottle.request.POST.get('time', time.time()),
-        # 'user' = bottle.request.get_cookies('username')
-    }
-    if not path.exists():
-        os.makedirs(path)
-        info.update({
-            'slug': slug,             # note ID
-            'create': info['ctime'],  # create time
-            'url': 'view/' + slug,    # used to view note
-            'title': info['title'] or 'Note %d (created at %s)' % (
-                len(list(__filedir__.iterdir())),
-                time.strftime('%Y.%m.%d')
-            )
-        })
-    elif not filename.exists():
-        slug_fixpath()
-    else:
-        with open(filename, 'r') as f:
-            tmp, info = info, json_loads(f.read())
-            info.update(tmp)
-    with open(filename, 'w') as f:
-        f.write(json_dumps(info))
-
-
-@sticky.get('/view/<slug>')
-@bottle.view('noteview.html', template_lookup=[__statics__])
-def note_view(slug):
-    slug, path = slug_checkpath(slug)
-    if not path.exists():
-        return bottle.HTTPError(404, 'Notes not found.')
-    filename = slug_notename(slug)
-    if not filename.exists():
-        slug_fixpath(slug)
-    with open(filename, 'r') as f:
-        info = json_loads(f.read())
-        info['ts'] = time.strftime(
-            '%Y-%m-%d %H:%M:%S',
-            time.localtime(info['ctime'])
-        )
-        return info  # TODO: hide sensitive information
-
-
-@sticky.get('/delete/<slug>')
-def note_delete(slug):
-    _, path = slug_checkpath(slug)
-    if path.exists():
-        shutil.rmtree(str(path))
-
-
-@sticky.route('/list')
-def app_list_notes():
-    notes = []
-    for slug in __filedir__.iterdir():
-        filename = slug_notename(slug)
-        if not filename.exists():
-            try:
-                slug_fixpath(slug)
-            except Exception:
-                continue
-        with open(filename, 'r') as f:
-            notes.append(json_loads(f.read()))
-    return {'notes': sorted(notes, key=lambda n: n['create'])}
-
-
-@sticky.route('/clear')
-def app_clear_notes():
-    for slug in __filedir__.iterdir():
-        shutil.rmtree(str(__filedir__.joinpath(slug)))
-
-
-@sticky.route('/generate')
-def app_generate_slug(chars=string.hexdigits, length=8):
-    for i in range(__maxtry__):
-        slug = ''.join([random.choice(chars) for j in range(length)])
-        if not __filedir__.joinpath(slug).exists():
-            return slug
-    return bottle.HTTPError(403, 'No space for new contents.')
-
-
-@sticky.route('/')  # bottle.redirect('/dashboard')
-@sticky.route('/dashboard')
-@bottle.view('manager.html', template_lookup=[__statics__])
-def app_root():
-    return app_list_notes()
-
-
-@sticky.get('/<filename:path>')
-def app_static_files(filename):
-    return bottle.static_file(filename, __statics__)
-
-
-application = sticky
+def make_parser():
+    parser = argparse.ArgumentParser(prog=__name__, description=(
+        'StickyNotes Python Server entry script. Default listen on ' +
+        'http://{}:{}').format(CONFIG.host, CONFIG.port))
+    parser.add_argument(
+        '-H', '--host', default=CONFIG.host, type=str, help='listen address')
+    parser.add_argument(
+        '-P', '--port', default=CONFIG.port, type=int, help='port number')
+    parser.add_argument(
+        '-D', '--debug', default=int(CONFIG.debug),
+        action='count', help='supply to enable debug mode')
+    return parser
 
 
 def main(args=sys.argv[1:]):
-    # create directory to store notes
-    if not os.path.exists(__filedir__):
-        os.makedirs(__filedir__)
-    bottle.run(application, port=1234, debug=True)
+    args = make_parser().parse_args(args)
+
+    for k, v in vars(args).items():
+        if hasattr(CONFIG, k):
+            setattr(CONFIG, k, v)
+
+    bottle.run(
+        app=make_app(),
+        host=CONFIG.host,
+        port=CONFIG.port,
+        debug=bool(CONFIG.debug),
+    )
 
 
 # THE END

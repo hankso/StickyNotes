@@ -4,36 +4,74 @@
     <title>View Note | StickyNotes: your cloud notes manager</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/js/api.js"></script>
     <style>
         body {
             width: 80%;
             padding: 40px;
             position: relative;
         }
-        h3 {
-            white-space: nowrap;
-            overflow-x: auto;
+        header, footer {
+            display: flex;
+            flex-flow: row nowrap;
+            align-items: center;
+            justify-content: space-between;
         }
         article {
             margin: 3rem;
             white-space: pre-wrap;
         }
-        footer {
-            font-size: 0.75em;
-            display: flex;
-            flex-flow: row nowrap;
-            justify-content: space-between;
+        h3 {
+            white-space: nowrap;
+            overflow-x: auto;
+            margin: 0;
         }
-        span {
-        }
+        a { color: black; }
+        span { font-size: 0.75rem; }
     </style>
+    <script type="text/template" id="template-noteview">
+        <header>
+            <h3>${title}</h3>
+            <a href="dashboard.html" ${getCookie('token') || 'hidden'}>
+                Back to Dashboard
+            </a>
+        </header>
+        <article>${content}</article>
+        <footer>
+            <span>Note ID: ${slug}</span>
+            <span>
+                Last Modified: 
+                ${ (new Date(mtime*1000)).toLocaleString() }
+            </span>
+        </footer>
+    </script>
 </head>
 <body>
-    <h3>{{title}}</h3>
-    <article>{{text}}</article>
-    <footer>
-        <span>Note ID: {{slug}}</span>
-        <span>Last Modified: {{ts}}</span>
-    </footer>
+    <script>
+        $(function() {
+            // Get note id
+            let query = new URLSearchParams(window.location.search);
+            let slug = query.get('slug');
+            
+            if (!slug) {
+                $('body').html('<article>Cannot load resource!</article>');
+                return;
+            }
+
+            window.getCookie = (key) => (match = document.cookie.match(
+                `(^|;) *${key}=([^;]*)(;|$)`
+            )) ? match[2] : null;
+            
+            // Render note detail
+            $.getJSON(api.view(slug), ({title, content, slug, mtime}) => {
+                /* keep in mind that Python's time stamps since Epoch 
+                 * is second based, while JavaScript uses millisecond. */
+                $('body').html(
+                    eval('`' + $('#template-noteview').html() + '`')
+                );
+            });
+        });
+    </script>
 </body>
 </html>

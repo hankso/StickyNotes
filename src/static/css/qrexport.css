@@ -1,0 +1,48 @@
+
+    #container {
+        width: 80%;
+        margin: 20px auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(128px, auto));
+        grid-auto-rows: minmax(128px, auto);
+        grid-gap: 20px;
+    }
+    #container div {
+    }
+    #container div h5 {
+        width: 128px;
+        margin: 15px 0 5px 0;
+    }
+    #container div img {
+        width: 128px;
+        height: 128px;
+    }
+
+    form { font-size: 0.8rem; }
+    form * { color: purple; }
+    form #ctrlbar {
+        margin: 0 10px;
+        display: grid;
+        grid-template-columns: 3fr 6fr 1fr;
+        grid-gap: 8px;
+    }
+    form #ctrlbar input { width: 100%; }
+    form #ctrlbar span { text-align: right; }
+    form #ctrlbar #fname {
+        grid-column: 2/4;
+    }
+    form #ctrlbtn {
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-around;
+    }
+    form #ctrlbtn * { cursor: pointer; }
+    
+    h3 { text-align: center; margin: 30px; }
+
+@media print {
+    .print-hide {
+        display: none;
+    }
+}
+
