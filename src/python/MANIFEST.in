@@ -1,0 +1,3 @@
+include *.md *.rst *.conf ../../LICENSE.txt requirements.txt
+recursive-include ../statics *
+global-exclude __pycache__ .ropeproject/* *.py[codx] *.src *.old *.db

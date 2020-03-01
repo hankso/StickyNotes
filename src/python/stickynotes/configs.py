@@ -6,8 +6,6 @@
 # Webpage: https://github.com/hankso
 # Time: Sat 29 Feb 2020 03:30:19 PM CST
 
-'''__doc__'''
-
 import string
 import os.path as op
 try:
@@ -20,7 +18,8 @@ BASEDIR = op.dirname(op.abspath(__file__))
 POSSIBLE_CONFIG_FILES = list(filter(op.exists, [
     op.join(BASEDIR, 'config.conf'),
     op.join(BASEDIR, 'config.ini'),
-    op.expanduser('~/.stickynotes.conf')
+    op.abspath('./stickynotes.conf'),
+    op.expanduser('~/.stickynotes.conf'),
 ]))
 
 # Default configurations

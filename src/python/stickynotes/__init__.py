@@ -6,21 +6,6 @@
 # Webpage: https://github.com/hankso
 # Time: Thu 20 Feb 2020 03:20:18 PM CST
 
-'''
-
-Configuration
--------------
-This program automatically loads configuration files from::
-
-    asdf
-
-Note
-----
-Template is not used to render webpage, because Python is not the
-only distribution in this project. C based server or GitHub Pages
-(which provides pure static file hosting) may be used in backend.
-'''
-
 # built-ins
 import sys
 import argparse
